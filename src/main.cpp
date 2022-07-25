@@ -1,37 +1,12 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
-#include <SD.h> 
-#include <SPI.h>
-
-#include <vector>
-#include <map>
+// TODO: SDCard 與 MCP41010共用SPI, modify: util/MCP4XXXX
+#include <FileSystem.h>
+#include <util/ArxContainer.h>
+#include <util/Relay.h>
 
 WebServer server(80);
-
-class SDCard 
-{
-public:
-  std::vector<std::map<String, String>> getList();
-  static void api_getList();
-  static void api_createDir();
-  static void api_renameDir();
-  static void api_deleteDir();
-  static void api_uploadFile();
-  static void api_renameFile();
-  static void api_deleteFile();
-private:
-  String fileSize();
-};
-
-std::vector<std::map<String, String>> getList() {
-  std::vector<std::map<String, String>> result;
-  return result;
-}
-
-void SDCard::api_getList() {
-  // TODO: 
-}
 
 class Clock
 {
@@ -79,23 +54,16 @@ class UPS
   
 };
 
-class API
-{
-public:
-  API();
-private:
-};
-
 API::API() {
   // route register
   // sd-card
-  server.on("/sd-card", HTTP_GET, SDCard::api_getList);
-  server.on("/sd-card/file", HTTP_POST, SDCard::api_uploadFile);
-  server.on("/sd-card/file", HTTP_PUT, SDCard::api_renameFile);
-  server.on("/sd-card/file", HTTP_DELETE, SDCard::api_deleteFile);
-  server.on("/sd-card/dir", HTTP_POST, SDCard::api_createDir);
-  server.on("/sd-card/dir", HTTP_PUT, SDCard::api_renameDir);
-  server.on("/sd-card/dir", HTTP_DELETE, SDCard::api_deleteDir);
+  // server.on("/sd-card", HTTP_GET, SDCard::api_getList);
+  // server.on("/sd-card/file", HTTP_POST, SDCard::api_uploadFile);
+  // server.on("/sd-card/file", HTTP_PUT, SDCard::api_renameFile);
+  // server.on("/sd-card/file", HTTP_DELETE, SDCard::api_deleteFile);
+  // server.on("/sd-card/dir", HTTP_POST, SDCard::api_createDir);
+  // server.on("/sd-card/dir", HTTP_PUT, SDCard::api_renameDir);
+  // server.on("/sd-card/dir", HTTP_DELETE, SDCard::api_deleteDir);
 }
 
 void setup() {
