@@ -2,7 +2,8 @@
 #include <FS.h>
 #include <SD.h>
 #include <SPI.h>
-// #include <ArxContainer.h>
+#include <Arduino.h>
+#include <ArxContainer.h>
 
 class FileSystem
 {
@@ -15,9 +16,12 @@ public:
   };
   uint8_t cardType();
   uint64_t cardSize();
-  void listDir(const char*, uint8_t);
+  arx::vector<String> blabla();
+  // arx::map<String, arx::vector<arx::map<String, String>>> listDir(const char*, uint8_t);
   void createDir(const char*);
   void removeDir(const char*);
+  String readTextFile(const char*);
+  String readTextFile(const String);
   void readFile(const char*);
   void writeFile(const char*, const char*);
   void appendFile(const char*, const char*);

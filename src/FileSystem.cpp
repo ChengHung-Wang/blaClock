@@ -12,35 +12,95 @@ File FileSystem::open(const char* fileName) {
   return card.open(fileName);
 }
 
-void FileSystem::listDir(const char * dirname, uint8_t levels){
-  Serial.printf("Listing directory: %s\n", dirname);
-  File root = card.open(dirname);
-  if(!root){
-    Serial.println("Failed to open directory");
-    return;
-  }
-  if(!root.isDirectory()){
-    Serial.println("Not a directory");
-    return;
+// arx::map<String, arx::vector<arx::map<String, String>>> FileSystem::listDir(const char * dirname, uint8_t levels) {
+//   arx::map<String, arx::vector<arx::map<String, String>>> result;
+//   arx::vector<arx::map<String, String>> dirs;
+//   arx::vector<arx::map<String, String>> files;
+//   File root = card.open(dirname);
+//   if(!root){
+//     //TODO: save to syslog
+//     // Serial.println("Failed to open directory");
+//     return result;
+//   }
+//   if(!root.isDirectory()){
+//     // Serial.println("Not a directory");
+//     return result;
+//   }
+
+//   File file = root.openNextFile();
+//   while(file){
+//     if(file.isDirectory()){
+//       arx::map<String, String> thisDir;
+//       thisDir["name"] = file.name();
+//       dirs.push_back(thisDir);
+//       if(levels){
+//         listDir(file.name(), levels - 1);
+//       }
+//     } else {
+//       arx::map<String, String> thisFile;
+//       thisFile["name"] = file.name();
+//       thisFile["size"] = file.size();
+//       files.push_back(thisFile);
+//     }
+//     file = root.openNextFile();
+//   }
+
+//   return result;
+// }
+
+String FileSystem::readTextFile(const char* path)
+{
+  String result = "";
+  File file = card.open(path);
+  if(!file){
+    // TODO: save to syslog
+    // Serial.println("Failed to open file for reading");
+    return result;
   }
 
-  File file = root.openNextFile();
-  while(file){
-    if(file.isDirectory()){
-      Serial.print("  DIR : ");
-      Serial.println(file.name());
-      if(levels){
-        listDir(file.name(), levels -1);
-      }
-    } else {
-      Serial.print("  FILE: ");
-      Serial.print(file.name());
-      Serial.print("  SIZE: ");
-      Serial.println(file.size());
-    }
-    file = root.openNextFile();
+  Serial.print("Read from file: ");
+  while(file.available()){
+    // Serial.write(file.read());
+    char thisChar = file.read();
+    result += String(thisChar);
   }
+  file.close();
+  return result;
 }
+
+String FileSystem::readTextFile(const String path) {
+  return FileSystem::readTextFile(path.c_str());
+}
+
+// void FileSystem::listDir(const char * dirname, uint8_t levels){
+//   Serial.printf("Listing directory: %s\n", dirname);
+//   File root = card.open(dirname);
+//   if(!root){
+//     Serial.println("Failed to open directory");
+//     return;
+//   }
+//   if(!root.isDirectory()){
+//     Serial.println("Not a directory");
+//     return;
+//   }
+
+//   File file = root.openNextFile();
+//   while(file){
+//     if(file.isDirectory()){
+//       Serial.print("  DIR : ");
+//       Serial.println(file.name());
+//       if(levels){
+//         listDir(file.name(), levels -1);
+//       }
+//     } else {
+//       Serial.print("  FILE: ");
+//       Serial.print(file.name());
+//       Serial.print("  SIZE: ");
+//       Serial.println(file.size());
+//     }
+//     file = root.openNextFile();
+//   }
+// }
 
 void FileSystem::createDir(const char * path){
   Serial.printf("Creating Dir: %s\n", path);
