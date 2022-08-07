@@ -12,42 +12,114 @@ File FileSystem::open(const char* fileName) {
   return card.open(fileName);
 }
 
-// arx::map<String, arx::vector<arx::map<String, String>>> FileSystem::listDir(const char * dirname, uint8_t levels) {
-//   arx::map<String, arx::vector<arx::map<String, String>>> result;
-//   arx::vector<arx::map<String, String>> dirs;
-//   arx::vector<arx::map<String, String>> files;
-//   File root = card.open(dirname);
-//   if(!root){
-//     //TODO: save to syslog
-//     // Serial.println("Failed to open directory");
-//     return result;
-//   }
-//   if(!root.isDirectory()){
-//     // Serial.println("Not a directory");
-//     return result;
-//   }
+Vector<String> FileSystem::split(const char splitBy, String src) {
+  Vector<String> result;
+  String cache = "";
+  for (const char &item : src) {
+    if (item != splitBy) {
+      cache += item;
+    }else {
+      if (cache != "") {
+        result.push_back(cache);
+      }
+      cache = "";
+    }
+  }
+  if (cache != "") {
+    result.push_back(cache);
+  }
+  return result;
+}
 
-//   File file = root.openNextFile();
-//   while(file){
-//     if(file.isDirectory()){
-//       arx::map<String, String> thisDir;
-//       thisDir["name"] = file.name();
-//       dirs.push_back(thisDir);
-//       if(levels){
-//         listDir(file.name(), levels - 1);
-//       }
-//     } else {
-//       arx::map<String, String> thisFile;
-//       thisFile["name"] = file.name();
-//       thisFile["size"] = file.size();
-//       files.push_back(thisFile);
-//     }
-//     file = root.openNextFile();
-//   }
+String FileSystem::previousDirPath(String path) {
+  String result = "/";
+  Vector<String> pathBreak = split('/', path);
+  if (pathBreak.size() > 1) {
+    for (int index = 0; index <= pathBreak.size() - 2; index ++) {
+      result += pathBreak[index];
+      if (index != pathBreak.size() - 2) {
+        result += "/";
+      }
+    }
+  }
+  return result;
+}
 
-//   return result;
-// }
+// [ok] list dir
+DynamicJsonDocument FileSystem::listDir(const char * dirname, uint8_t levels) {
+  DynamicJsonDocument result(4096);
+  result["dirs"].to<JsonArray>();
+  result["files"].to<JsonArray>();
+  File root = card.open(dirname);
+  if(!root){
+    //TODO: save to syslog
+    // Serial.println("Failed to open directory");
+    return result;
+  }
+  if(!root.isDirectory()){
+    return result;
+  }
+  File file = root.openNextFile();
 
+  while(file){
+    if(file.isDirectory()){
+      DynamicJsonDocument thisDir(1024);
+      thisDir["name"] = String(file.name());
+      thisDir["lastModify"] = file.getLastWrite();
+      result["dirs"].add(thisDir);
+      if(levels){
+        listDir(file.name(), levels - 1);
+      }
+    } 
+    else {
+      DynamicJsonDocument thisFile(1024);
+      thisFile["name"] = String(file.name());
+      thisFile["size"] = file.size();
+      thisFile["lastModify"] = file.getLastWrite();
+      result["files"].add(thisFile);
+    }
+    file = root.openNextFile();
+  }
+  return result;
+}
+
+DynamicJsonDocument FileSystem::listDir(String path,uint8_t levels) {
+  return listDir(path.c_str(), levels);
+}
+
+DynamicJsonDocument FileSystem::listDir(String path) {
+  return listDir(path.c_str(), 0);
+}
+
+void FileSystem::api_listDir(AsyncWebServerRequest *request) {
+  String jsonStr;
+  DynamicJsonDocument result(4096);
+  if (request->hasParam("path")) {
+    String path = request->getParam("path")->value();
+    result["success"] = true;
+    result["message"] = "";
+    result["data"].add(listDir(path.c_str(), 0));
+
+    serializeJson(result, jsonStr);
+    AsyncWebServerResponse * res = request->beginResponse(200, "application/json", jsonStr);
+    res->addHeader("Access-Control-Allow-Origin", "*");
+    res->addHeader("Accept", "application/json");
+    request->send(res);
+  }
+  else {
+    result["success"] = false;
+    result["message"] = "ERR_MISSING_FIELD";
+    result["data"] = "";
+
+    serializeJson(result, jsonStr);
+    AsyncWebServerResponse * res = request->beginResponse(400, "application/json", jsonStr);
+    res->addHeader("Access-Control-Allow-Origin", "*");
+    res->addHeader("Accept", "application/json");
+    request->send(res);
+  }
+}
+
+// [ok] read text file
 String FileSystem::readTextFile(const char* path)
 {
   String result = "";
@@ -60,7 +132,6 @@ String FileSystem::readTextFile(const char* path)
 
   Serial.print("Read from file: ");
   while(file.available()){
-    // Serial.write(file.read());
     char thisChar = file.read();
     result += String(thisChar);
   }
@@ -72,69 +143,105 @@ String FileSystem::readTextFile(const String path) {
   return FileSystem::readTextFile(path.c_str());
 }
 
-// void FileSystem::listDir(const char * dirname, uint8_t levels){
-//   Serial.printf("Listing directory: %s\n", dirname);
-//   File root = card.open(dirname);
-//   if(!root){
-//     Serial.println("Failed to open directory");
-//     return;
-//   }
-//   if(!root.isDirectory()){
-//     Serial.println("Not a directory");
-//     return;
-//   }
-
-//   File file = root.openNextFile();
-//   while(file){
-//     if(file.isDirectory()){
-//       Serial.print("  DIR : ");
-//       Serial.println(file.name());
-//       if(levels){
-//         listDir(file.name(), levels -1);
-//       }
-//     } else {
-//       Serial.print("  FILE: ");
-//       Serial.print(file.name());
-//       Serial.print("  SIZE: ");
-//       Serial.println(file.size());
-//     }
-//     file = root.openNextFile();
-//   }
-// }
-
-void FileSystem::createDir(const char * path){
+// [ok] create dir
+String FileSystem::createDir(const char * path){
   Serial.printf("Creating Dir: %s\n", path);
-  if(card.mkdir(path)){
-    Serial.println("Dir created");
-  } else {
-    Serial.println("mkdir failed");
+  if(! card.mkdir(path)){
+    return "mkdir failed";
+  }
+  return "";
+}
+
+String FileSystem::createDir(String path){
+  return createDir(path.c_str());
+}
+
+void FileSystem::api_createDir(AsyncWebServerRequest *req) {
+  String jsonStr;
+  DynamicJsonDocument result(4096);
+  if (req->hasParam("path")) {
+    String path = req->getParam("path")->value();
+    String mkdirResult = createDir(path);
+    int responseCode;
+    if (mkdirResult == "") {
+      responseCode = 200;
+      result["success"] = true;
+      result["message"] = "";
+      result["data"].add(listDir(path.c_str(), 0));
+    }else {
+      responseCode = 500;
+      result["success"] = false;
+      result["message"] = mkdirResult;
+      result["data"] = "";
+    }
+    serializeJson(result, jsonStr);
+    AsyncWebServerResponse * res = req->beginResponse(responseCode, "application/json", jsonStr);
+    res->addHeader("Access-Control-Allow-Origin", "*");
+    res->addHeader("Accept", "application/json");
+    req->send(res);
+  }
+  else {
+    result["success"] = false;
+    result["message"] = "ERR_MISSING_FIELD";
+    result["data"] = "";
+
+    serializeJson(result, jsonStr);
+    AsyncWebServerResponse * res = req->beginResponse(400, "application/json", jsonStr);
+    res->addHeader("Access-Control-Allow-Origin", "*");
+    res->addHeader("Accept", "application/json");
+    req->send(res);
   }
 }
 
-void FileSystem::removeDir(const char * path){
-  Serial.printf("Removing Dir: %s\n", path);
-  if(card.rmdir(path)){
-    Serial.println("Dir removed");
-  } else {
-    Serial.println("rmdir failed");
+// [ok] remove dir
+String FileSystem::deleteDir(const char * path){
+  if(! card.rmdir(path)){
+    return "rmdir failed";
+  }
+  return "";
+}
+
+String FileSystem::deleteDir(String path) {
+  return deleteDir(path.c_str());
+}
+
+void FileSystem::api_deleteDir(AsyncWebServerRequest *req) {
+  String jsonStr;
+  DynamicJsonDocument result(4096);
+  if (req->hasParam("path")) {
+    String path = req->getParam("path")->value();
+    String rmdirResult = deleteDir(path);
+    int responseCode;
+    if (rmdirResult == "") {
+      responseCode = 200;
+      result["success"] = true;
+      result["message"] = "";
+      result["data"].add(listDir(previousDirPath(path)));
+    }else {
+      responseCode = 500;
+      result["success"] = false;
+      result["message"] = rmdirResult;
+      result["data"] = "";
+    }
+    serializeJson(result, jsonStr);
+    AsyncWebServerResponse * res = req->beginResponse(responseCode, "application/json", jsonStr);
+    res->addHeader("Access-Control-Allow-Origin", "*");
+    res->addHeader("Accept", "application/json");
+    req->send(res);
+  }
+  else {
+    result["success"] = false;
+    result["message"] = "ERR_MISSING_FIELD";
+    result["data"] = "";
+
+    serializeJson(result, jsonStr);
+    AsyncWebServerResponse * res = req->beginResponse(400, "application/json", jsonStr);
+    res->addHeader("Access-Control-Allow-Origin", "*");
+    res->addHeader("Accept", "application/json");
+    req->send(res);
   }
 }
 
-void FileSystem::readFile(const char * path){
-  Serial.printf("Reading file: %s\n", path);
-
-  File file = card.open(path);
-  if(!file){
-    Serial.println("Failed to open file for reading");
-    return;
-  }
-
-  Serial.print("Read from file: ");
-  while(file.available()){
-    Serial.write(file.read());
-  }
-  file.close();
-}
 
 void FileSystem::writeFile(const char * path, const char * message){
   Serial.printf("Writing file: %s\n", path);

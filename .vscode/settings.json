@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "*.sp": "spice",
         "vector": "cpp",
         "array": "cpp",
         "atomic": "cpp",
@@ -47,6 +48,9 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "cinttypes": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "complex": "cpp",
+        "valarray": "cpp",
+        "regex": "cpp"
     }
 }

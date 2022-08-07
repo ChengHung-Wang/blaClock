@@ -1,54 +1,33 @@
 #include <Arduino.h>
-#include <WiFi.h>
-#include <Carbon.h>
+#include <Configure.h>
+// Network, Web Service
 #include <AsyncTCP.h>
+#include <DNSServer.h>
 #include <ESPAsyncWebServer.h>
-// TODO: SDCard 與 MCP41010共用SPI, modify: util/MCP4XXXX
-/*
-  IO expender:
-    input: 74hc165(三個EC11開關、主開關)
-    output: 74hc595（五個Relay Control，3pin for RGB LED）
-*/
+// Time
+#include <Carbon.h>
+// I2S Audio
+#include <Audio.h>
+// SD Card
 #include <FileSystem.h>
-#include <ArxContainer.h>
+// Relay Control
 #include <util/Relay.h>
+// JSON support
+#include <ArduinoJson.h>
+// MCP4XXXX Chip
+#include <util/MCP4XXXX.h>
 
 unsigned long previousMillis = 0;
 unsigned long interval = 30000;
 
 // ************************
-// Pins
-// ************************
-// SPI (VSPI) for SD and MCP41010 Digital POT
-#define PIN_SCK 18
-#define PIN_MOSI 23
-#define PIN_MISO 19
-#define PIN_SD_SS 5
-#define PIN_POTA_SS 32
-#define PIN_POTB_SS 33
-#define PIN_POTC_SS 25
-#define PIN_POTD_SS 26
-// I2C for MAX17043
-#define PIN_SCL 22
-#define PIN_SDA 21
-// PCM5102 I2S DAC
-#define PIN_DACA_DOUT 27
-#define PIN_DACA_LRC 14
-#define PIN_DACA_BCK 13
-// EC11 Rotary Encoder
-#define PIN_RE_S1 17
-#define PIN_RE_S2 16
-#define PIN_RE_BTN 4
-
-// ************************
 // web server test
 // ************************
-
-Carbon CarbonTime;
+Carbon DateTime;
 FileSystem SDCard(5);
-AsyncWebServer server(80);
+AsyncWebServer Server(80);
+DNSServer DNS;
 
-// Replace with your network credentials
 const char* ssid     = "research";
 const char* password = "Skills39";
 
@@ -61,7 +40,7 @@ unsigned long epochTime;
 
 
 // Initialize WiFi
-void initWiFi() {
+IPAddress initWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   Serial.print("Connecting to WiFi ..");
@@ -69,9 +48,9 @@ void initWiFi() {
     Serial.print('.');
     delay(1000);
   }
-
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
+  return WiFi.localIP();
 }
 
 class Clock
@@ -89,64 +68,44 @@ class BZ
 
 };
 
-class Audio
-{
-public:
-  int vol;
-};
-
-class Mic1 : public Audio
-{
-
-};
-
-class Mic2 : public Audio
-{
-
-};
-
-class AUX : public Audio
-{
-
-};
-
-class ClockAudio : public Audio
-{
-
-};
-
 class UPS
 {
   
 };
 
-//   // server.on("/sd-card", HTTP_GET, SDCard::api_getList);
-//   // server.on("/sd-card/file", HTTP_POST, SDCard::api_uploadFile);
-
 void setup() {
   Serial.begin(115200);
-  // put your setup code here, to run once:
-  initWiFi();
+
+  // init
+  IPAddress ip = initWiFi();
+  DNS.start(DNS_PORT, "blaclock.net", ip);
   SDCard.init();
-  CarbonTime.init();
+  DateTime.init();
+
+  // list json in serial port
+  String jsonStr;
+  serializeJson(SDCard.listDir("/", 0), jsonStr);
+  Serial.println(jsonStr);
   
-  server.on("/blabla", HTTP_GET, [](AsyncWebServerRequest *request) {
+  Server.on("/dir", HTTP_GET, [](AsyncWebServerRequest * req) { SDCard.api_listDir(req); });
+
+  Server.on("/blabla", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncWebServerResponse * response = request->beginResponse(200, "text/plain", "Ok");
     response->addHeader("Access-Control-Allow-Origin", "*");
     request->send(response);
   });
-  server.on("/json", HTTP_POST, [](AsyncWebServerRequest * request) {
+  Server.on("/json", HTTP_POST, [](AsyncWebServerRequest * request) {
     String content = "{\"success\": false, \"message\": \"blabla\", \"data\": {}}";
     AsyncWebServerResponse * res = request->beginResponse(200, "application/json", content);
     res->addHeader("Access-Control-Allow-Origin", "*");
     res->addHeader("Accept", "application/json");
     request->send(res);
   });
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+  Server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     String responseContent = SDCard.readTextFile("/index.html");
     request->send(200, "text/html", responseContent);
   });
-  server.begin(); //启动服务器
+  Server.begin();
 }
 
 void loop() {

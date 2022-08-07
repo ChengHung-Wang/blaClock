@@ -1,9 +1,15 @@
-#include <vfs_api.h>
+#pragma execution_character_set("utf-8")
+#include <Arduino.h>
+#include <Vector.h>
 #include <FS.h>
 #include <SD.h>
 #include <SPI.h>
-#include <Arduino.h>
-#include <ArxContainer.h>
+#include <vfs_api.h>
+// JSON support
+#include <ArduinoJson.h>
+// Network, Web Service
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 
 class FileSystem
 {
@@ -16,27 +22,54 @@ public:
   };
   uint8_t cardType();
   uint64_t cardSize();
-  arx::vector<String> blabla();
-  // arx::map<String, arx::vector<arx::map<String, String>>> listDir(const char*, uint8_t);
-  void createDir(const char*);
-  void removeDir(const char*);
+  
+  // [ok] listDir
+  DynamicJsonDocument listDir(const char*, uint8_t);
+  DynamicJsonDocument listDir(const String, u_int8_t);
+  DynamicJsonDocument listDir(const String);
+  void api_listDir(AsyncWebServerRequest*);
+
+  // [ok] createDir
+  String createDir(const char*);
+  String createDir(const String);
+  void api_createDir(AsyncWebServerRequest*);
+
+  // renameDir
+  void api_renameDir(AsyncWebServerRequest*);
+
+  // [ok] deleteDir
+  String deleteDir(const char*);
+  String deleteDir(String);
+  void api_deleteDir(AsyncWebServerRequest*);
+  
+  // uploadFile
+  void api_uploadFile(AsyncWebServerRequest*);
+
+  // renameFile
+  void renameFile(const char*, const char*);
+  void api_renameFile(AsyncWebServerRequest*);
+
+  // deleteFile
+  void deleteFile(const char*);
+  void api_deleteFile(AsyncWebServerRequest*);
+  
+  // readFile
   String readTextFile(const char*);
   String readTextFile(const String);
-  void readFile(const char*);
-  void writeFile(const char*, const char*);
+
+  // append a new file
   void appendFile(const char*, const char*);
-  void renameFile(const char*, const char*);
-  void deleteFile(const char*);
+
+  // writeFile
+  void writeFile(const char*, const char*);
+  
+  // for test & debug
   void testFileIO(const char*);
-  static void api_getList();
-  static void api_createDir();
-  static void api_renameDir();
-  static void api_deleteDir();
-  static void api_uploadFile();
-  static void api_renameFile();
-  static void api_deleteFile();
+
   File open(const char*); // show be fix
 private:
   int csPin;
+  Vector<String> split(const char, String);
+  String previousDirPath(String);
   SDFS card = SDFS(FSImplPtr(new VFSImpl()));
 };
