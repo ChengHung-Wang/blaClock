@@ -8,7 +8,6 @@
 #include <Carbon.h>
 // I2S Audio
 #include <Audio.h>
-#include <SPI.h>
 // MAX17043
 #include <Wire.h> // Needed for I2C
 #include <SparkFun_MAX1704x_Fuel_Gauge_Arduino_Library.h>
@@ -69,6 +68,7 @@ void i2cScan() {
   Serial.println("Scanning...");
   nDevices = 0;
   for(address = 1; address < 127; address++ ) {
+    // 0x32
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
     if (error == 0) {
@@ -118,19 +118,39 @@ void setup() {
 	  lipo.setThreshold(20); // Set alert threshold to 20%.
   }
 
+  // ----------------------
   // Web Service
-  // Server.on("/dir", HTTP_GET, [](AsyncWebServerRequest * req) { SDCard.api_listDir(req); });
-  Server.on("/json", HTTP_POST, [](AsyncWebServerRequest * request) {
-    String content = "{\"success\": false, \"message\": \"blabla\", \"data\": {}}";
-    AsyncWebServerResponse * res = request->beginResponse(200, "application/json", content);
-    res->addHeader("Access-Control-Allow-Origin", "*");
-    res->addHeader("Accept", "application/json");
+  // ----------------------
+  Server.on("/api/v1/dir", HTTP_GET, [](AsyncWebServerRequest * req) { SDCard.api_listDir(req); });
+  Server.on("/api/v1/dir", HTTP_POST, [](AsyncWebServerRequest * req) { SDCard.api_createDir(req); });
+  
+  Server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    File responseContent = SDCard.open("/dist/index.html");
+    AsyncWebServerResponse *res = request->beginResponse(responseContent, "/", "text/html", false);
+    res->addHeader("charset", "UTF-8");
+    res->setCode(200);
     request->send(res);
   });
-  Server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    String responseContent = SDCard.readTextFile("/index.html");
-    request->send(200, "text/html", responseContent);
+  Server.onNotFound([](AsyncWebServerRequest *request) {
+    String url = request->url();
+    File targetFile = SDCard.open(("/dist" + url).c_str());
+    // ex: 10.71.74.15/favicon.ico => url = /favicon.ico
+    if (targetFile) {
+      AsyncWebServerResponse *res = request->beginResponse(targetFile, url, "", false);
+      res->setCode(200);
+      request->send(res);
+    }else {
+      String jsonStr;
+      DynamicJsonDocument result(4096);
+      result["success"] = false;
+      result["message"] = "ERR_URL_NOT_FOUND";
+      result["data"] = "";
+      serializeJson(result, jsonStr);
+      AsyncWebServerResponse *res = request->beginResponse(404, "application/json", jsonStr);
+      request->send(res);
+    }
   });
+
   Server.begin();
 }
 
@@ -145,22 +165,21 @@ void loop() {
   //   WiFi.reconnect();
   //   previousMillis = currentMillis;
   // }
-  audio.loop();
-  delay(2000);
+  // audio.loop();
 
-  voltage = lipo.getVoltage();
-	// lipo.getSOC() returns the estimated state of charge (e.g. 79%)
-	soc = lipo.getSOC();
-	// lipo.getAlert() returns a 0 or 1 (0=alert not triggered)
-	alert = lipo.getAlert();
+  // voltage = lipo.getVoltage();
+	// // lipo.getSOC() returns the estimated state of charge (e.g. 79%)
+	// soc = lipo.getSOC();
+	// // lipo.getAlert() returns a 0 or 1 (0=alert not triggered)
+	// alert = lipo.getAlert();
 
-	// Print the variables:
-	Serial.print("Voltage: ");
-	Serial.print(voltage);  // Print the battery voltage
-	Serial.println(" V");
+	// // Print the variables:
+	// Serial.print("Voltage: ");
+	// Serial.print(voltage);  // Print the battery voltage
+	// Serial.println(" V");
 
-	Serial.print("Percentage: ");
-	Serial.print(soc); // Print the battery state of charge
-	Serial.println(" %");
-  delay(5000);
+	// Serial.print("Percentage: ");
+	// Serial.print(soc); // Print the battery state of charge
+	// Serial.println(" %");
+  // delay(5000);
 }

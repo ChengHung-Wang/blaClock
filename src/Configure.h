@@ -15,8 +15,9 @@
 #define PIN_SDA 21
 // PCM5102 I2S DAC
 #define PIN_DAC_DOUT 25
-#define PIN_DAC_LRC 14
-#define PIN_DAC_BCK 13
+// #define PIN_DAC_LRC 14
+// #define PIN_DAC_BCK 13
+
 // EC11 Rotary Encoder
 #define PIN_RE_S1 17
 #define PIN_RE_S2 16
