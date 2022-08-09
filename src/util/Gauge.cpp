@@ -2,23 +2,16 @@
 #include <Wire.h>
 #include "Gauge.h"
 
-Gauge::Gauge(int _scl, int _sda, byte _addr = 0x32)
-{
-  scl = _scl;
-  sda = _sda;
-  addr = _addr;
-}
-
 bool Gauge::begin()
 {
-  Wire.begin(addr, sda, scl);
+  wire_.begin(addr_, sda_, scl_);
   return this->ping();
 }
 
 bool Gauge::ping()
 {
-  Wire.beginTransmission(addr);
-  byte err = Wire.endTransmission();
+  wire_.beginTransmission(addr_);
+  byte err = wire_.endTransmission();
   if (err)
     return false;
   return true;
@@ -38,11 +31,11 @@ uint8_t Gauge::charge()
 
 uint16_t Gauge::readReg(uint8_t reg)
 {
-  Wire.beginTransmission(addr);
-  Wire.write(reg);
-  Wire.endTransmission(false);
-  Wire.requestFrom(addr, (uint8_t)2);
-  uint8_t high_byte = Wire.read();
-  uint8_t low_byte = Wire.read();
+  wire_.beginTransmission(addr_);
+  wire_.write(reg);
+  wire_.endTransmission(false);
+  wire_.requestFrom(addr_, (uint8_t)2);
+  uint8_t high_byte = wire_.read();
+  uint8_t low_byte = wire_.read();
   return high_byte << 8 | low_byte;
 }

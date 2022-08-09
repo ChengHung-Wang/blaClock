@@ -4,7 +4,7 @@
 class Gauge
 {
 public:
-  Gauge(int, int, byte);
+  Gauge(int scl, int sda, byte addr = 0x32) : scl_(scl), sda_(sda), addr_(addr){};
   bool begin();
   uint16_t voltage(); // unit: mV; interval: 500ms
   uint8_t charge();   // unit: percent
@@ -17,9 +17,10 @@ private:
   const uint8_t REG_VCELL = 0x2;
   const uint8_t REG_SOC = 0x4;
 
-  int scl;
-  int sda;
-  uint8_t addr;
+  TwoWire wire_{1};
+  int scl_;
+  int sda_;
+  uint8_t addr_;
 };
 
 #endif // GAUGE_H
