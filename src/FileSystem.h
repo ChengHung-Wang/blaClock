@@ -1,3 +1,6 @@
+#ifndef FILESYSTEM_H
+#define FILESYSTEM_H
+
 #pragma execution_character_set("utf-8")
 #include <Arduino.h>
 #include <Vector.h>
@@ -73,3 +76,5 @@ private:
   String previousDirPath(String);
   SDFS card = SDFS(FSImplPtr(new VFSImpl()));
 };
+
+#endif // FILESYSTEM_H
