@@ -51,6 +51,7 @@
         "typeinfo": "cpp",
         "complex": "cpp",
         "valarray": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "list": "cpp"
     }
 }

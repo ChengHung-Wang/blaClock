@@ -14,11 +14,12 @@
 #define PIN_SCL 22
 #define PIN_SDA 21
 // PCM5102 I2S DAC
-#define PIN_DACA_DOUT 27
-#define PIN_DACA_LRC 14
-#define PIN_DACA_BCK 13
+#define PIN_DAC_DOUT 25
+#define PIN_DAC_LRC 14
+#define PIN_DAC_BCK 13
 // EC11 Rotary Encoder
 #define PIN_RE_S1 17
 #define PIN_RE_S2 16
 #define PIN_RE_BTN 4
 #define DNS_PORT 53
+// TODO: 74ch595

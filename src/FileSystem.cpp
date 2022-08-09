@@ -242,55 +242,46 @@ void FileSystem::api_deleteDir(AsyncWebServerRequest *req) {
   }
 }
 
-
-void FileSystem::writeFile(const char * path, const char * message){
+// 
+String FileSystem::writeFile(const char * path, const char * message){
   Serial.printf("Writing file: %s\n", path);
 
   File file = card.open(path, FILE_WRITE);
   if(!file){
-    Serial.println("Failed to open file for writing");
-    return;
+    return "Failed to open file for writing";
   }
-  if(file.print(message)){
-    Serial.println("File written");
-  } else {
-    Serial.println("Write failed");
+  if(! file.print(message)){
+    return "Write failed";
   }
   file.close();
+  return "";
 }
 
-void FileSystem::appendFile(const char * path, const char * message){
+String FileSystem::appendFile(const char * path, const char * message){
   Serial.printf("Appending to file: %s\n", path);
-
   File file = card.open(path, FILE_APPEND);
   if(!file){
-    Serial.println("Failed to open file for appending");
-    return;
+    return "Failed to open file for appending";
   }
-  if(file.print(message)){
-      Serial.println("Message appended");
-  } else {
-    Serial.println("Append failed");
+  if(! file.print(message)){
+    return "Append failed";
   }
   file.close();
+  return "";
 }
 
-void FileSystem::renameFile(const char * path1, const char * path2){
-  Serial.printf("Renaming file %s to %s\n", path1, path2);
-  if (card.rename(path1, path2)) {
-    Serial.println("File renamed");
-  } else {
-    Serial.println("Rename failed");
+String FileSystem::renameFile(const char * path1, const char * path2){
+  if (! card.rename(path1, path2)) {
+    return "Rename failed";
   }
+  return "";
 }
 
-void FileSystem::deleteFile(const char * path){
-  Serial.printf("Deleting file: %s\n", path);
-  if(card.remove(path)){
-    Serial.println("File deleted");
-  } else {
-    Serial.println("Delete failed");
+String FileSystem::deleteFile(const char * path){
+  if(! card.remove(path)){
+    return "Delete failed";
   }
+  return "";
 }
 
 void FileSystem::testFileIO(const char * path){

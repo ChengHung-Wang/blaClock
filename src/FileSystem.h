@@ -46,11 +46,11 @@ public:
   void api_uploadFile(AsyncWebServerRequest*);
 
   // renameFile
-  void renameFile(const char*, const char*);
+  String renameFile(const char*, const char*);
   void api_renameFile(AsyncWebServerRequest*);
 
   // deleteFile
-  void deleteFile(const char*);
+  String deleteFile(const char*);
   void api_deleteFile(AsyncWebServerRequest*);
   
   // readFile
@@ -58,10 +58,10 @@ public:
   String readTextFile(const String);
 
   // append a new file
-  void appendFile(const char*, const char*);
+  String appendFile(const char*, const char*);
 
   // writeFile
-  void writeFile(const char*, const char*);
+  String writeFile(const char*, const char*);
   
   // for test & debug
   void testFileIO(const char*);
