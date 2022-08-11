@@ -50,10 +50,12 @@ public:
 
   // renameFile
   String renameFile(const char*, const char*);
+  String renameFile(String, String);
   void api_renameFile(AsyncWebServerRequest*);
 
-  // deleteFile
+  // [ok] deleteFile
   String deleteFile(const char*);
+  String deleteFile(String);
   void api_deleteFile(AsyncWebServerRequest*);
   
   // readFile
@@ -70,6 +72,9 @@ public:
   void testFileIO(const char*);
 
   File open(const char*); // show be fix
+
+  // get web depends file
+  void api_webuiDependsFile(AsyncWebServerRequest*);
 private:
   int csPin;
   Vector<String> split(const char, String);

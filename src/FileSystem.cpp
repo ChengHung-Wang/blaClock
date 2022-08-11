@@ -12,6 +12,37 @@ File FileSystem::open(const char* fileName) {
   return card.open(fileName);
 }
 
+void FileSystem::api_fileOpen(AsyncWebServerRequest *req) {
+  String jsonStr;
+  int responseCode;
+  DynamicJsonDocument result(4096);
+  if (! req->hasParam("path")) {
+    result["success"] = false;
+    result["message"] = "ERR_MISSING_FIELD";
+    result["data"] = "";
+    responseCode = 400;
+  }else {
+    String filePath = req->getParam("path")->value();
+    File targetFile = this->card.open(filePath);
+    if (targetFile) {
+      AsyncWebServerResponse *res = req->beginResponse(targetFile, filePath, "", false);
+      res->setCode(200);
+      req->send(res);
+      return;
+    }else {
+      result["success"] = false;
+      result["message"] = "ERR_URL_NOT_FOUND";
+      result["data"] = "";
+      responseCode = 404;
+    }
+  }
+  serializeJson(result, jsonStr);
+  AsyncWebServerResponse * res = req->beginResponse(responseCode, "application/json", jsonStr);
+  res->addHeader("Access-Control-Allow-Origin", "*");
+  res->addHeader("Accept", "application/json");
+  req->send(res);
+}
+
 Vector<String> FileSystem::split(const char splitBy, String src) {
   Vector<String> result;
   String cache = "";
@@ -270,18 +301,104 @@ String FileSystem::appendFile(const char * path, const char * message){
   return "";
 }
 
-String FileSystem::renameFile(const char * path1, const char * path2){
+String FileSystem::renameFile(const char * path1, const char * path2) {
   if (! card.rename(path1, path2)) {
     return "Rename failed";
   }
   return "";
 }
 
-String FileSystem::deleteFile(const char * path){
+String FileSystem::renameFile(String path1, String path2) {
+  return this->renameFile(path1.c_str(), path2.c_str());
+}
+
+void FileSystem::api_renameFile(AsyncWebServerRequest* req) {
+  /************************
+   * param callbackPath which dirList location you want return(optional)
+   * param path1 srcPath
+   * param path2 targetPath
+  /************************/
+  String jsonStr;
+  DynamicJsonDocument result(4096);
+  int responseCode;
+  if (!req->hasParam("path1") || !req->hasParam("path2")) {
+    result["success"] = false;
+    result["message"] = "ERR_MISSING_FIELD";
+    result["data"] = "";
+    responseCode = 400;
+  }else {
+    String path1 = req->getParam("path1")->value(), 
+           path2 = req->getParam("path2")->value();
+    String renameResult = this->renameFile(path1, path2);
+    if (renameResult == "") {
+      responseCode = 200;
+      result["success"] = true;
+      result["message"] = "";
+      if (req->hasParam("callbackPath")) {
+        result["data"] = listDir(req->getParam("callbackPath")->value());
+      }else {
+        result["data"] = "";
+      }
+    }else {
+      responseCode = 500;
+      result["success"] = false;
+      result["message"] = renameResult;
+      result["data"] = "";
+    }
+  }
+  serializeJson(result, jsonStr);
+  AsyncWebServerResponse * res = req->beginResponse(responseCode, "application/json", jsonStr);
+  res->addHeader("Access-Control-Allow-Origin", "*");
+  res->addHeader("Accept", "application/json");
+  req->send(res);
+}
+
+String FileSystem::deleteFile(const char * path) {
   if(! card.remove(path)){
     return "Delete failed";
   }
   return "";
+}
+
+String FileSystem::deleteFile(String path) {
+  return this->deleteFile(path.c_str());
+}
+
+void FileSystem::api_deleteFile(AsyncWebServerRequest *req) {
+  String jsonStr;
+  DynamicJsonDocument result(4096);
+  if (req->hasParam("path")) {
+    String path = req->getParam("path")->value();
+    String rmdirResult = deleteFile(path);
+    int responseCode;
+    if (rmdirResult == "") {
+      responseCode = 200;
+      result["success"] = true;
+      result["message"] = "";
+      result["data"].add(listDir(path));
+    }else {
+      responseCode = 500;
+      result["success"] = false;
+      result["message"] = rmdirResult;
+      result["data"] = "";
+    }
+    serializeJson(result, jsonStr);
+    AsyncWebServerResponse * res = req->beginResponse(responseCode, "application/json", jsonStr);
+    res->addHeader("Access-Control-Allow-Origin", "*");
+    res->addHeader("Accept", "application/json");
+    req->send(res);
+  }
+  else {
+    result["success"] = false;
+    result["message"] = "ERR_MISSING_FIELD";
+    result["data"] = "";
+
+    serializeJson(result, jsonStr);
+    AsyncWebServerResponse * res = req->beginResponse(400, "application/json", jsonStr);
+    res->addHeader("Access-Control-Allow-Origin", "*");
+    res->addHeader("Accept", "application/json");
+    req->send(res);
+  }
 }
 
 void FileSystem::testFileIO(const char * path){
@@ -324,4 +441,24 @@ void FileSystem::testFileIO(const char * path){
   end = millis() - start;
   Serial.printf("%u bytes written for %u ms\n", 2048 * 512, end);
   file.close();
+}
+
+void FileSystem::api_webuiDependsFile(AsyncWebServerRequest *request) {
+  String url = request->url();
+  // ex: 10.71.74.15/favicon.ico => url = /favicon.ico
+  File targetFile = this->card.open(("/dist" + url).c_str());
+  if (targetFile) {
+    AsyncWebServerResponse *res = request->beginResponse(targetFile, url, "", false);
+    res->setCode(200);
+    request->send(res);
+  }else {
+    String jsonStr;
+    DynamicJsonDocument result(4096);
+    result["success"] = false;
+    result["message"] = "ERR_URL_NOT_FOUND";
+    result["data"] = "";
+    serializeJson(result, jsonStr);
+    AsyncWebServerResponse *res = request->beginResponse(404, "application/json", jsonStr);
+    request->send(res);
+  }
 }

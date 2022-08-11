@@ -9,8 +9,10 @@
 // I2S Audio
 #include <Audio.h>
 // MAX17043
-#include <Wire.h> // Needed for I2C
-#include <SparkFun_MAX1704x_Fuel_Gauge_Arduino_Library.h>
+#include <Wire.h>
+#include <util/Gauge.h>
+// #include <Wire.h> // Needed for I2C
+// #include <SparkFun_MAX1704x_Fuel_Gauge_Arduino_Library.h>
 // SD Card
 #include <FileSystem.h>
 // Relay Control
@@ -33,10 +35,7 @@ DNSServer DNS;
 Audio audio;
 
 // Create a MAX17043
-SFE_MAX1704X lipo(MAX1704X_MAX17043);
-double voltage = 0; // Variable to keep track of LiPo voltage
-double soc = 0; // Variable to keep track of LiPo state-of-charge (SOC)
-bool alert; // Variable to keep track of whether alert has been triggered
+Gauge MAX17043(PIN_SCL, PIN_SDA, 50);
 
 String ssid     = "research";
 String password = "Skills39";
@@ -98,32 +97,21 @@ void i2cScan() {
 
 void setup() {
   Serial.begin(115200);
-  
+  //Wire.begin(PIN_SCL, PIN_SDA);
+  // i2cScan();
   // init
   IPAddress ip = initWiFi();
   DNS.start(DNS_PORT, "blaclock.net", ip);
   SDCard.init();
   DateTime.init();
-  Wire.begin(PIN_SDA, PIN_SCL);
-
-  // MAX1704
-  // Wire.begin(0x32, PIN_SDA, PIN_SCL);
-  lipo.enableDebugging();
-  // Set up the MAX17044 LiPo fuel gauge:
-  if (lipo.begin(Wire) == false) // Connect to the MAX17044 using the default wire port
-  {
-    Serial.println(F("MAX17044 not detected. Please check wiring. Freezing."));
-    // while (1);
-    lipo.quickStart();
-	  lipo.setThreshold(20); // Set alert threshold to 20%.
+  
+  if (! MAX17043.begin()) {
+    Serial.println("NMSL");
   }
 
   // ----------------------
   // Web Service
   // ----------------------
-  Server.on("/api/v1/dir", HTTP_GET, [](AsyncWebServerRequest * req) { SDCard.api_listDir(req); });
-  Server.on("/api/v1/dir", HTTP_POST, [](AsyncWebServerRequest * req) { SDCard.api_createDir(req); });
-  
   Server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     File responseContent = SDCard.open("/dist/index.html");
     AsyncWebServerResponse *res = request->beginResponse(responseContent, "/", "text/html", false);
@@ -131,30 +119,25 @@ void setup() {
     res->setCode(200);
     request->send(res);
   });
-  Server.onNotFound([](AsyncWebServerRequest *request) {
-    String url = request->url();
-    File targetFile = SDCard.open(("/dist" + url).c_str());
-    // ex: 10.71.74.15/favicon.ico => url = /favicon.ico
-    if (targetFile) {
-      AsyncWebServerResponse *res = request->beginResponse(targetFile, url, "", false);
-      res->setCode(200);
-      request->send(res);
-    }else {
-      String jsonStr;
-      DynamicJsonDocument result(4096);
-      result["success"] = false;
-      result["message"] = "ERR_URL_NOT_FOUND";
-      result["data"] = "";
-      serializeJson(result, jsonStr);
-      AsyncWebServerResponse *res = request->beginResponse(404, "application/json", jsonStr);
-      request->send(res);
-    }
-  });
-
+  Server.onNotFound([](AsyncWebServerRequest *req) { SDCard.api_webuiDependsFile(req); });
+  // ----------------------
+  // restful API
+  // ----------------------
+  Server.on("/api/v1/dir", HTTP_GET, [](AsyncWebServerRequest * req) { SDCard.api_listDir(req); });
+  Server.on("/api/v1/dir", HTTP_POST, [](AsyncWebServerRequest * req) { SDCard.api_createDir(req); });
+  Server.on("/api/v1/dir", HTTP_DELETE, [](AsyncWebServerRequest * req) { SDCard.api_deleteDir(req); });
+  Server.on("/api/v1/file", HTTP_GET, [](AsyncWebServerRequest * req) { SDCard.api_fileOpen(req); });
+  Server.on("/api/v1/file", HTTP_POST, [](AsyncWebServerRequest * req) { /* TODO: file upload */ });
+  Server.on("/api/v1/file", HTTP_PUT, [](AsyncWebServerRequest * req) { SDCard.api_renameFile(req); });
+  Server.on("/api/v1/file", HTTP_DELETE, [](AsyncWebServerRequest * req) { SDCard.api_deleteFile(req); });
+  
   Server.begin();
 }
 
 void loop() {
+  Serial.println("voltage: " + String(MAX17043.voltage()));
+  Serial.println("charge: " + String(MAX17043.charge()));
+  delay(3000);
   // // put your main code here, to run repeatedly:
   // //server.handleClient();
   // unsigned long currentMillis = millis();
