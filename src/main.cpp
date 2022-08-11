@@ -120,6 +120,7 @@ void setup() {
     request->send(res);
   });
   Server.onNotFound([](AsyncWebServerRequest *req) { SDCard.api_webuiDependsFile(req); });
+
   // ----------------------
   // restful API
   // ----------------------
@@ -130,6 +131,28 @@ void setup() {
   Server.on("/api/v1/file", HTTP_POST, [](AsyncWebServerRequest * req) { /* TODO: file upload */ });
   Server.on("/api/v1/file", HTTP_PUT, [](AsyncWebServerRequest * req) { SDCard.api_renameFile(req); });
   Server.on("/api/v1/file", HTTP_DELETE, [](AsyncWebServerRequest * req) { SDCard.api_deleteFile(req); });
+  
+  Server.on("/api/v1/clock", HTTP_GET, [](AsyncWebServerRequest * req) {  }); // get clock setting
+  Server.on("/api/v1/clock", HTTP_POST, [](AsyncWebServerRequest * req) {  }); // create a clock time
+  Server.on("/api/v1/clock", HTTP_PUT, [](AsyncWebServerRequest * req) {  });  // update clock
+  Server.on("/api/v1/clock", HTTP_DELETE, [](AsyncWebServerRequest * req) {  }); // delete clock
+
+  Server.on("api/v1/clock/alert", HTTP_GET, [](AsyncWebServerRequest * req) {  }); // alert summary
+  Server.on("api/v1/clock/alert", HTTP_POST, [](AsyncWebServerRequest * req) {  }); // alert set
+  Server.on("api/v1/clock/alert/unlock", HTTP_ANY, [](AsyncWebServerRequest * req) {  }); // unlock alert
+  
+  Server.on("/api/v1/time", HTTP_GET, [](AsyncWebServerRequest * req) {  }); // get current time
+  Server.on("/api/v1/time", HTTP_POST, [](AsyncWebServerRequest * req) {  }); // modify current time
+
+  Server.on("/api/v1/notification", HTTP_GET, [](AsyncWebServerRequest *req) {  });
+  Server.on("/api/v1/notification", HTTP_POST, [](AsyncWebServerRequest *req) {  });
+  Server.on("/api/v1/notification", HTTP_PUT, [](AsyncWebServerRequest *req) {  });
+  Server.on("/api/v1/notification", HTTP_DELETE, [](AsyncWebServerRequest *req) {  });
+
+  Server.on("/api/v1/audio", HTTP_GET, [](AsyncWebServerRequest *req) {  }); // get audio summary
+  Server.on("/api/v1/audio/mode", HTTP_POST, [](AsyncWebServerRequest *req) {  }); // mode = bluetooth, sd card, idle
+  Server.on("/api/v1/audio/volume", HTTP_GET, [](AsyncWebServerRequest *req) {  }); // get all channel volumes
+  Server.on("/api/v1/audio/volume", HTTP_POST, [](AsyncWebServerRequest *req) {  }); // set someone channel's vol
   
   Server.begin();
 }
