@@ -48,7 +48,7 @@ public:
   // uploadFile
   void api_uploadFile(AsyncWebServerRequest*);
 
-  // renameFile
+  // [ok] renameFile
   String renameFile(const char*, const char*);
   String renameFile(String, String);
   void api_renameFile(AsyncWebServerRequest*);
@@ -71,9 +71,11 @@ public:
   // for test & debug
   void testFileIO(const char*);
 
+  // [ok] open a file
   File open(const char*); // show be fix
-
-  // get web depends file
+  void api_fileOpen(AsyncWebServerRequest*);
+  
+  // [ok] get web depends file
   void api_webuiDependsFile(AsyncWebServerRequest*);
 private:
   int csPin;
