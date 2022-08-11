@@ -4,7 +4,7 @@
 
 bool Gauge::begin()
 {
-  wire_.begin(addr_, sda_, scl_);
+  wire_.begin(sda_, scl_);
   return this->ping();
 }
 
@@ -12,9 +12,7 @@ bool Gauge::ping()
 {
   wire_.beginTransmission(addr_);
   byte err = wire_.endTransmission();
-  if (err)
-    return false;
-  return true;
+  return err == 0;
 }
 
 uint16_t Gauge::voltage()
