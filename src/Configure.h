@@ -18,7 +18,7 @@
 #define PIN_DAC_DOUT 16
 #define PIN_DAC_LCK 17
 #define PIN_DAC_BCK 4
-// 74ch595
+// 74HC595
 #define PIN_74HC595_DS 32
 #define PIN_74HC595_STCP 25
 #define PIN_74HC595_SHCP 33
