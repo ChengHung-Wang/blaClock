@@ -1,5 +1,5 @@
-#ifndef FILESYSTEM_H
-#define FILESYSTEM_H
+#ifndef FILESERVER_H
+#define FILESERVER_H
 
 #pragma execution_character_set("utf-8")
 #include <Arduino.h>
@@ -14,12 +14,12 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
-class FileSystem
+class FileServer
 {
 public:
-  FileSystem() { csPin = 5; };
-  FileSystem(int _csPin) : csPin(_csPin)
-  {}
+    FileServer() { csPin = 5; };
+    FileServer(int _csPin) : csPin(_csPin)
+    {}
   bool init() {
     return card.begin(csPin);
   };
@@ -84,4 +84,4 @@ private:
   SDFS card = SDFS(FSImplPtr(new VFSImpl()));
 };
 
-#endif // FILESYSTEM_H
+#endif // FILESERVER_H

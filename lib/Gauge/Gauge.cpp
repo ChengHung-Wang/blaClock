@@ -1,6 +1,5 @@
 #include "Gauge.h"
 #include <Arduino.h>
-#include <Wire.h>
 
 bool Gauge::begin()
 {

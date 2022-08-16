@@ -1,21 +1,21 @@
-#include "FileSystem.h"
+#include "FileServer.h"
 
-uint8_t FileSystem::cardType()
+uint8_t FileServer::cardType()
 {
     return card.cardType();
 }
 
-uint64_t FileSystem::cardSize()
+uint64_t FileServer::cardSize()
 {
     return card.cardSize();
 }
 
-File FileSystem::open(const char *fileName)
+File FileServer::open(const char *fileName)
 {
     return card.open(fileName);
 }
 
-void FileSystem::api_fileOpen(AsyncWebServerRequest *req)
+void FileServer::api_fileOpen(AsyncWebServerRequest *req)
 {
     String jsonStr;
     int responseCode;
@@ -53,7 +53,7 @@ void FileSystem::api_fileOpen(AsyncWebServerRequest *req)
     req->send(res);
 }
 
-Vector<String> FileSystem::split(const char splitBy, String src)
+Vector<String> FileServer::split(const char splitBy, String src)
 {
     Vector<String> result;
     String cache = "";
@@ -79,7 +79,7 @@ Vector<String> FileSystem::split(const char splitBy, String src)
     return result;
 }
 
-String FileSystem::previousDirPath(String path)
+String FileServer::previousDirPath(String path)
 {
     String result = "/";
     Vector<String> pathBreak = split('/', path);
@@ -98,7 +98,7 @@ String FileSystem::previousDirPath(String path)
 }
 
 // [ok] list dir
-DynamicJsonDocument FileSystem::listDir(const char *dirname, uint8_t levels)
+DynamicJsonDocument FileServer::listDir(const char *dirname, uint8_t levels)
 {
     DynamicJsonDocument result(4096);
     result["dirs"].to<JsonArray>();
@@ -142,17 +142,17 @@ DynamicJsonDocument FileSystem::listDir(const char *dirname, uint8_t levels)
     return result;
 }
 
-DynamicJsonDocument FileSystem::listDir(String path, uint8_t levels)
+DynamicJsonDocument FileServer::listDir(String path, uint8_t levels)
 {
     return listDir(path.c_str(), levels);
 }
 
-DynamicJsonDocument FileSystem::listDir(String path)
+DynamicJsonDocument FileServer::listDir(String path)
 {
     return listDir(path.c_str(), 0);
 }
 
-void FileSystem::api_listDir(AsyncWebServerRequest *request)
+void FileServer::api_listDir(AsyncWebServerRequest *request)
 {
     String jsonStr;
     DynamicJsonDocument result(4096);
@@ -184,7 +184,7 @@ void FileSystem::api_listDir(AsyncWebServerRequest *request)
 }
 
 // [ok] read text file
-String FileSystem::readTextFile(const char *path)
+String FileServer::readTextFile(const char *path)
 {
     String result = "";
     File file = card.open(path);
@@ -205,13 +205,13 @@ String FileSystem::readTextFile(const char *path)
     return result;
 }
 
-String FileSystem::readTextFile(const String path)
+String FileServer::readTextFile(const String path)
 {
-    return FileSystem::readTextFile(path.c_str());
+    return FileServer::readTextFile(path.c_str());
 }
 
 // [ok] create dir
-String FileSystem::createDir(const char *path)
+String FileServer::createDir(const char *path)
 {
     Serial.printf("Creating Dir: %s\n", path);
     if (!card.mkdir(path))
@@ -221,12 +221,12 @@ String FileSystem::createDir(const char *path)
     return "";
 }
 
-String FileSystem::createDir(String path)
+String FileServer::createDir(String path)
 {
     return createDir(path.c_str());
 }
 
-void FileSystem::api_createDir(AsyncWebServerRequest *req)
+void FileServer::api_createDir(AsyncWebServerRequest *req)
 {
     String jsonStr;
     DynamicJsonDocument result(4096);
@@ -270,7 +270,7 @@ void FileSystem::api_createDir(AsyncWebServerRequest *req)
 }
 
 // [ok] remove dir
-String FileSystem::deleteDir(const char *path)
+String FileServer::deleteDir(const char *path)
 {
     if (!card.rmdir(path))
     {
@@ -279,12 +279,12 @@ String FileSystem::deleteDir(const char *path)
     return "";
 }
 
-String FileSystem::deleteDir(String path)
+String FileServer::deleteDir(String path)
 {
     return deleteDir(path.c_str());
 }
 
-void FileSystem::api_deleteDir(AsyncWebServerRequest *req)
+void FileServer::api_deleteDir(AsyncWebServerRequest *req)
 {
     String jsonStr;
     DynamicJsonDocument result(4096);
@@ -328,7 +328,7 @@ void FileSystem::api_deleteDir(AsyncWebServerRequest *req)
 }
 
 //
-String FileSystem::writeFile(const char *path, const char *message)
+String FileServer::writeFile(const char *path, const char *message)
 {
     Serial.printf("Writing file: %s\n", path);
 
@@ -345,7 +345,7 @@ String FileSystem::writeFile(const char *path, const char *message)
     return "";
 }
 
-String FileSystem::appendFile(const char *path, const char *message)
+String FileServer::appendFile(const char *path, const char *message)
 {
     Serial.printf("Appending to file: %s\n", path);
     File file = card.open(path, FILE_APPEND);
@@ -361,7 +361,7 @@ String FileSystem::appendFile(const char *path, const char *message)
     return "";
 }
 
-String FileSystem::renameFile(const char *path1, const char *path2)
+String FileServer::renameFile(const char *path1, const char *path2)
 {
     if (!card.rename(path1, path2))
     {
@@ -370,12 +370,12 @@ String FileSystem::renameFile(const char *path1, const char *path2)
     return "";
 }
 
-String FileSystem::renameFile(String path1, String path2)
+String FileServer::renameFile(String path1, String path2)
 {
     return this->renameFile(path1.c_str(), path2.c_str());
 }
 
-void FileSystem::api_renameFile(AsyncWebServerRequest *req)
+void FileServer::api_renameFile(AsyncWebServerRequest *req)
 {
     /************************
      * param callbackPath which dirList location you want return(optional)
@@ -426,7 +426,7 @@ void FileSystem::api_renameFile(AsyncWebServerRequest *req)
     req->send(res);
 }
 
-String FileSystem::deleteFile(const char *path)
+String FileServer::deleteFile(const char *path)
 {
     if (!card.remove(path))
     {
@@ -435,12 +435,12 @@ String FileSystem::deleteFile(const char *path)
     return "";
 }
 
-String FileSystem::deleteFile(String path)
+String FileServer::deleteFile(String path)
 {
     return this->deleteFile(path.c_str());
 }
 
-void FileSystem::api_deleteFile(AsyncWebServerRequest *req)
+void FileServer::api_deleteFile(AsyncWebServerRequest *req)
 {
     String jsonStr;
     DynamicJsonDocument result(4096);
@@ -483,7 +483,7 @@ void FileSystem::api_deleteFile(AsyncWebServerRequest *req)
     }
 }
 
-void FileSystem::testFileIO(const char *path)
+void FileServer::testFileIO(const char *path)
 {
     File file = card.open(path);
     static uint8_t buf[512];
@@ -532,7 +532,7 @@ void FileSystem::testFileIO(const char *path)
     file.close();
 }
 
-void FileSystem::api_webuiDependsFile(AsyncWebServerRequest *request)
+void FileServer::api_webuiDependsFile(AsyncWebServerRequest *request)
 {
     String url = request->url();
     // ex: 10.71.74.15/favicon.ico => url = /favicon.ico

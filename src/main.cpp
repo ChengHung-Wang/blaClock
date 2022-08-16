@@ -1,26 +1,25 @@
 #include <Arduino.h>
-#include <Configure.h>
 // Network, Web Service
 #include <AsyncTCP.h>
 #include <DNSServer.h>
 #include <ESPAsyncWebServer.h>
-// Time
-#include <Carbon.h>
-// I2S Audio
-#include <Audio.h>
-// MAX17043
-#include <Wire.h>
-#include <util/Gauge.h>
-// #include <Wire.h> // Needed for I2C
-// #include <SparkFun_MAX1704x_Fuel_Gauge_Arduino_Library.h>
-// SD Card
-#include <FileSystem.h>
-// Relay Control
-#include <util/Relay.h>
 // JSON support
 #include <ArduinoJson.h>
+
+// I2S Audio
+#include <Audio.h>
+// Time
+#include <Carbon.h>
+// MAX17043
+#include <Gauge.h>
+// SD Card
+#include <FileServer.h>
+// Relay Control
+#include <Relay.h>
 // MCP4XXXX Chip
-#include <util/MCP4XXXX.h>
+// #include <MCP4XXXX.h>
+
+#include <config.h>
 
 unsigned long previousMillis = 0;
 unsigned long interval = 30000;
@@ -29,7 +28,7 @@ unsigned long interval = 30000;
 // web server test
 // ************************
 Carbon DateTime;
-FileSystem SDCard(5);
+FileServer SDCard(5);
 AsyncWebServer Server(80);
 DNSServer DNS;
 Audio audio;
