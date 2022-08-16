@@ -1,13 +1,16 @@
 #include "Relay.h"
 
-void Relay::init() {
+void Relay::init()
+{
     pinMode(pin, OUTPUT);
 }
 
-void Relay::on() {
+void Relay::on()
+{
     digitalWrite(pin, HIGH);
 }
 
-void Relay::off() {
+void Relay::off()
+{
     digitalWrite(pin, LOW);
 }
