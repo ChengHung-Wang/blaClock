@@ -37,9 +37,6 @@ Audio audio;
 // Create a MAX17043
 Gauge MAX17043(PIN_SCL, PIN_SDA, 50);
 
-String ssid     = "research";
-String password = "Skills39";
-
 // Timer variables
 unsigned long lastTime = 0;
 unsigned long timerDelay = 30000;
@@ -50,7 +47,7 @@ unsigned long epochTime;
 // Initialize WiFi
 IPAddress initWiFi() {
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid.c_str(), password.c_str());
+  WiFi.begin(String(WIFI_SSID).c_str(), String(WIFI_PASSWORD).c_str());
   Serial.print("Connecting to WiFi ..");
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print('.');
