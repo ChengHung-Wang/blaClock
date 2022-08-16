@@ -6,21 +6,26 @@
 #define PIN_MOSI 23
 #define PIN_MISO 19
 #define PIN_SD_SS 5
-#define PIN_POTA_SS 32
-#define PIN_POTB_SS 33
-#define PIN_POTC_SS 25
-#define PIN_POTD_SS 26
+// digital potentiometer
+#define PIN_VR_A_SS 12
+#define PIN_VR_B_SS 14
+#define PIN_VR_C_SS 27
+#define PIN_VR_D_SS 26
 // I2C for MAX17043
-#define PIN_SCL 22
 #define PIN_SDA 21
+#define PIN_SCL 22
 // PCM5102 I2S DAC
-#define PIN_DAC_DOUT 25
-// #define PIN_DAC_LRC 14
-// #define PIN_DAC_BCK 13
+#define PIN_DAC_DOUT 16
+#define PIN_DAC_LCK 17
+#define PIN_DAC_BCK 4
+// 74ch595
+#define PIN_74HC595_DS 32
+#define PIN_74HC595_STCP 25
+#define PIN_74HC595_SHCP 33
 
-// EC11 Rotary Encoder
-#define PIN_RE_S1 17
-#define PIN_RE_S2 16
-#define PIN_RE_BTN 4
+// ************************
+// Internet Services Configure
+// ************************
 #define DNS_PORT 53
-// TODO: 74ch595
+#define WIFI_SSID "research"
+#define WIFI_PASSWORD "Skills39"
