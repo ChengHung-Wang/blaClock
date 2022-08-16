@@ -34,7 +34,7 @@ DNSServer DNS;
 Audio audio;
 
 // Create a MAX17043
-Gauge MAX17043(PIN_SCL, PIN_SDA, 50);
+Gauge gauge;
 
 // Timer variables
 unsigned long lastTime = 0;
@@ -112,7 +112,7 @@ void setup()
     SDCard.init();
     DateTime.init();
 
-    if (!MAX17043.begin())
+    if (!gauge.begin())
     {
         Serial.println("NMSL");
     }
@@ -174,8 +174,8 @@ void setup()
 
 void loop()
 {
-    Serial.println("voltage: " + String(MAX17043.voltage()));
-    Serial.println("charge: " + String(MAX17043.charge()));
+    Serial.println("voltage: " + String(gauge.voltage()));
+    Serial.println("charge: " + String(gauge.charge()));
     delay(3000);
     // // put your main code here, to run repeatedly:
     // //server.handleClient();
@@ -188,20 +188,4 @@ void loop()
     //   previousMillis = currentMillis;
     // }
     // audio.loop();
-
-    // voltage = lipo.getVoltage();
-    // // lipo.getSOC() returns the estimated state of charge (e.g. 79%)
-    // soc = lipo.getSOC();
-    // // lipo.getAlert() returns a 0 or 1 (0=alert not triggered)
-    // alert = lipo.getAlert();
-
-    // // Print the variables:
-    // Serial.print("Voltage: ");
-    // Serial.print(voltage);  // Print the battery voltage
-    // Serial.println(" V");
-
-    // Serial.print("Percentage: ");
-    // Serial.print(soc); // Print the battery state of charge
-    // Serial.println(" %");
-    // delay(5000);
 }
