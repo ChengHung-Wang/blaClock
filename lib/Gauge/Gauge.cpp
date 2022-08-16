@@ -5,10 +5,10 @@
 bool Gauge::begin()
 {
     Wire.begin();
-    return this->ping();
+    return this->_ping();
 }
 
-bool Gauge::ping()
+bool Gauge::_ping()
 {
     Wire.beginTransmission(addr_);
     byte err = Wire.endTransmission();

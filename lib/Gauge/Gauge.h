@@ -13,7 +13,7 @@ public:
                         // TODO make a decimal version of charge()
 
 private:
-    bool ping();
+    bool _ping();
     uint16_t readReg(uint8_t);
 
     const uint8_t REG_VCELL = 0x2;
