@@ -11,24 +11,27 @@
 */
 
 #include <Arduino.h>
-#include <Ticker.h>
+#include "WiFi.h"
 #include <Audio.h>
 #include <SPI.h>
-
 // Digital I/O used
 #define SD_CS          5
 #define SPI_MOSI      23
 #define SPI_MISO      19
 #define SPI_SCK       18
 
-#define I2S_DOUT      25
-#define I2S_BCLK      13
-#define I2S_LRC       14
+#define I2S_DOUT      16
+#define I2S_BCLK      4
+#define I2S_LRC       17
 
 Audio audio;
 // Timer variables
 unsigned long lastTime = 0;
 unsigned long timerDelay = 1000;
+
+String ssid =     "research";
+String password = "Skills39";
+
 
 void setup() {
     pinMode(SD_CS, OUTPUT);      
@@ -37,10 +40,14 @@ void setup() {
     SPI.setFrequency(1000000);
     Serial.begin(115200);
     SD.begin(SD_CS);
-
+    WiFi.disconnect();
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid.c_str(), password.c_str());
+    while (WiFi.status() != WL_CONNECTED) delay(1500);
+    delay(3000);
     audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
-    audio.setVolume(12); // 0...21
-
+    audio.setVolume(20); // 0...21
+    // audio.connecttohost("http://mp3.ffh.de/radioffh/hqlivestream.mp3"); //  128k mp3
     audio.connecttoFS(SD, "ProDer.mp3");
 }
 
@@ -55,6 +62,7 @@ void tcr1s(){
 void loop()
 {   
     audio.loop();
+    
     if ((millis() - lastTime) > timerDelay) {
         lastTime = millis();
         tcr1s();
