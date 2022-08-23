@@ -22,7 +22,9 @@ unsigned long Carbon::now()
     }
     time(&datetime);
     updateRTC(timeInfo);
-    hasInitRTC = true;
+    if (issetRTC) {
+        hasInitRTC = true;
+    }
     return datetime;
 }
 
