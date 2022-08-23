@@ -8,6 +8,7 @@ class Gauge
 public:
     Gauge(uint8_t addr = 0x32) : addr_(addr){};
     bool begin();
+    bool begin(int, int);
     uint16_t voltage(); // unit: mV; interval: 500ms
     uint8_t charge();   // unit: percent
                         // TODO make a decimal version of charge()

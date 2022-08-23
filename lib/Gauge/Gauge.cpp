@@ -8,6 +8,12 @@ bool Gauge::begin()
     return this->_ping();
 }
 
+bool Gauge::begin(int scl, int sda)
+{
+    Wire.begin(scl, sda);
+    return this->_ping();
+}
+
 bool Gauge::_ping()
 {
     Wire.beginTransmission(addr_);
