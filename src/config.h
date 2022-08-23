@@ -2,6 +2,7 @@
 #define CONFIG_H
 
 #include <Arduino.h>
+#include <Wire.h>
 
 // ************************
 // Pins
@@ -21,6 +22,10 @@
 #define PIN_74HC595_DS 32
 #define PIN_74HC595_STCP 25
 #define PIN_74HC595_SHCP 33
+// I2C
+#define PIN_SCL 22
+#define PIN_SDA 21
+
 
 // ************************
 // Internet Services Configuration
@@ -29,4 +34,50 @@
 #define WIFI_SSID "research"
 #define WIFI_PASSWORD "Skills39"
 
+
+//  temp
+// ************************
+// I2C scan
+// ************************
+void i2cScan()
+{
+    byte error, address;
+    int nDevices;
+    Serial.println("Scanning...");
+    nDevices = 0;
+    for (address = 1; address < 127; address++)
+    {
+        // 0x32
+        Wire.beginTransmission(address);
+        error = Wire.endTransmission();
+        if (error == 0)
+        {
+            Serial.print("I2C device found at address 0x");
+            if (address < 16)
+            {
+                Serial.print("0");
+            }
+            Serial.println(address, HEX);
+            Serial.println(String("address: ") + address);
+            nDevices++;
+        }
+        else if (error == 4)
+        {
+            Serial.print("Unknow error at address 0x");
+            if (address < 16)
+            {
+                Serial.print("0");
+            }
+            Serial.println(address, HEX);
+        }
+    }
+    if (nDevices == 0)
+    {
+        Serial.println("No I2C devices found\n");
+    }
+    else
+    {
+        Serial.println("done\n");
+    }
+}
 #endif // CONFIG_H

@@ -17,12 +17,10 @@
 // Relay Control
 #include <Relay.h>
 // MCP4XXXX Chip
-// #include <MCP4XXXX.h>
+// #include <MCP4XXXX.h>        
+#include "../lib/Dpot/Dpot.h"
 
 #include <config.h>
-
-unsigned long previousMillis = 0;
-unsigned long interval = 30000;
 
 // ************************
 // web server test
@@ -31,14 +29,19 @@ Carbon DateTime;
 FileServer SDCard(5);
 AsyncWebServer Server(80);
 DNSServer DNS;
-Audio audio;
+Audio PCM5102A;
+// MCP41010
+Dpot digitalVR1(PIN_DPOT_A_SS);
+Dpot digitalVR2(PIN_DPOT_B_SS);
+Dpot digitalVR3(PIN_DPOT_C_SS);
+Dpot digitalVR4(PIN_DPOT_D_SS);
 
 // Create a MAX17043
 Gauge gauge;
 
 // Timer variables
 unsigned long lastTime = 0;
-unsigned long timerDelay = 30000;
+unsigned long timerDelay = 30;
 
 // Variable to save current epoch time
 unsigned long epochTime;
@@ -59,93 +62,60 @@ IPAddress initWiFi()
     return WiFi.localIP();
 }
 
-void i2cScan()
-{
-    byte error, address;
-    int nDevices;
-    Serial.println("Scanning...");
-    nDevices = 0;
-    for (address = 1; address < 127; address++)
-    {
-        // 0x32
-        Wire.beginTransmission(address);
-        error = Wire.endTransmission();
-        if (error == 0)
-        {
-            Serial.print("I2C device found at address 0x");
-            if (address < 16)
-            {
-                Serial.print("0");
-            }
-            Serial.println(address, HEX);
-            Serial.println(String("address: ") + address);
-            nDevices++;
-        }
-        else if (error == 4)
-        {
-            Serial.print("Unknow error at address 0x");
-            if (address < 16)
-            {
-                Serial.print("0");
-            }
-            Serial.println(address, HEX);
-        }
-    }
-    if (nDevices == 0)
-    {
-        Serial.println("No I2C devices found\n");
-    }
-    else
-    {
-        Serial.println("done\n");
-    }
-}
-
 void setup()
 {
     Serial.begin(115200);
-    // Wire.begin(PIN_SCL, PIN_SDA);
-    //  i2cScan();
     //  init
     IPAddress ip = initWiFi();
     DNS.start(DNS_PORT, "blaclock.net", ip);
     SDCard.init();
     DateTime.init();
 
-    if (!gauge.begin())
+    digitalVR1.begin();
+    digitalVR2.begin();
+    digitalVR3.begin();
+    digitalVR4.begin();
+
+    digitalVR1.write(0x00);
+    digitalVR2.write(0x00);
+    digitalVR3.write(0x00);
+    digitalVR4.write(0x00);
+
+    PCM5102A.setPinout(PIN_DAC_BCK, PIN_DAC_LCK, PIN_DAC_DOUT);
+    PCM5102A.setVolume(12); // 0...21
+    // PCM5102A.connecttoFS(SDCard.card, "/ProDer.mp3");
+
+    if (!gauge.begin(PIN_SCL, PIN_SDA))
     {
         Serial.println("NMSL");
     }
+
+    Serial.println("now: " + String(DateTime.now()));
 
     // ----------------------
     // Web Service
     // ----------------------
     Server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-    File responseContent = SDCard.open("/dist/index.html");
-    AsyncWebServerResponse *res = request->beginResponse(responseContent, "/", "text/html", false);
-    res->addHeader("charset", "UTF-8");
-    res->setCode(200);
-    request->send(res); });
-    Server.onNotFound([](AsyncWebServerRequest *req)
-                      { SDCard.api_webuiDependsFile(req); });
+    {
+        File responseContent = SDCard.open("/dist/index.html");
+        AsyncWebServerResponse *res = request->beginResponse(responseContent, "/", "text/html", false);
+        res->addHeader("charset", "UTF-8");
+        res->setCode(200);
+        request->send(res); 
+    });
+
+    Server.onNotFound([](AsyncWebServerRequest *req){ SDCard.api_webuiDependsFile(req); });
 
     // ----------------------
     // restful API
     // ----------------------
-    Server.on("/api/v1/dir", HTTP_GET, [](AsyncWebServerRequest *req)
-              { SDCard.api_listDir(req); });
-    Server.on("/api/v1/dir", HTTP_POST, [](AsyncWebServerRequest *req)
-              { SDCard.api_createDir(req); });
-    Server.on("/api/v1/dir", HTTP_DELETE, [](AsyncWebServerRequest *req)
-              { SDCard.api_deleteDir(req); });
-    Server.on("/api/v1/file", HTTP_GET, [](AsyncWebServerRequest *req)
-              { SDCard.api_fileOpen(req); });
+    Server.on("/api/v1/dir", HTTP_GET, [](AsyncWebServerRequest *req){ SDCard.api_listDir(req); });
+    Server.on("/api/v1/dir", HTTP_POST, [](AsyncWebServerRequest *req){ SDCard.api_createDir(req); });
+    Server.on("/api/v1/dir", HTTP_DELETE, [](AsyncWebServerRequest *req){ SDCard.api_deleteDir(req); });
+    Server.on("/api/v1/file", HTTP_GET, [](AsyncWebServerRequest *req){ SDCard.api_fileOpen(req); });
     Server.on("/api/v1/file", HTTP_POST, [](AsyncWebServerRequest *req) { /* TODO: file upload */ });
-    Server.on("/api/v1/file", HTTP_PUT, [](AsyncWebServerRequest *req)
-              { SDCard.api_renameFile(req); });
-    Server.on("/api/v1/file", HTTP_DELETE, [](AsyncWebServerRequest *req)
-              { SDCard.api_deleteFile(req); });
+    Server.on("/api/v1/file", HTTP_PUT, [](AsyncWebServerRequest *req){ SDCard.api_renameFile(req); });
+    Server.on("/api/v1/file", HTTP_DELETE, [](AsyncWebServerRequest *req){ SDCard.api_deleteFile(req); });
 
     Server.on("/api/v1/clock", HTTP_GET, [](AsyncWebServerRequest *req) {});    // get clock setting
     Server.on("/api/v1/clock", HTTP_POST, [](AsyncWebServerRequest *req) {});   // create a clock time
@@ -166,26 +136,22 @@ void setup()
 
     Server.on("/api/v1/audio", HTTP_GET, [](AsyncWebServerRequest *req) {});         // get audio summary
     Server.on("/api/v1/audio/mode", HTTP_POST, [](AsyncWebServerRequest *req) {});   // mode = bluetooth, sd card, idle
-    Server.on("/api/v1/audio/volume", HTTP_GET, [](AsyncWebServerRequest *req) {});  // get all channel volumes
-    Server.on("/api/v1/audio/volume", HTTP_POST, [](AsyncWebServerRequest *req) {}); // set someone channel's vol
-
+    Server.on("/api/v1/audio/volume", HTTP_GET, [](AsyncWebServerRequest *req) {  });
+    Server.on("/api/v1/audio/volume/1", HTTP_POST, [](AsyncWebServerRequest *req) { digitalVR1.api_write(req); });
+    Server.on("/api/v1/audio/volume/2", HTTP_POST, [](AsyncWebServerRequest *req) { digitalVR2.api_write(req); });
+    Server.on("/api/v1/audio/volume/3", HTTP_POST, [](AsyncWebServerRequest *req) { digitalVR3.api_write(req); });
+    Server.on("/api/v1/audio/volume/4", HTTP_POST, [](AsyncWebServerRequest *req) { digitalVR4.api_write(req); });
     Server.begin();
 }
 
 void loop()
 {
-    Serial.println("voltage: " + String(gauge.voltage()));
-    Serial.println("charge: " + String(gauge.charge()));
-    delay(3000);
-    // // put your main code here, to run repeatedly:
-    // //server.handleClient();
-    // unsigned long currentMillis = millis();
-    // if ((WiFi.status() != WL_CONNECTED) && (currentMillis - previousMillis >=interval)) {
-    //   Serial.print(millis());
-    //   Serial.println("Reconnecting to WiFi...");
-    //   WiFi.disconnect();
-    //   WiFi.reconnect();
-    //   previousMillis = currentMillis;
-    // }
-    // audio.loop();
+    if (DateTime.now() - lastTime >= timerDelay) {
+        lastTime = DateTime.now();
+        Serial.println("voltage: " + String(gauge.voltage()));
+        Serial.println("charge: " + String(gauge.charge()));
+        Serial.println("now: " + String(DateTime.now()));        
+    }
+
+    PCM5102A.loop();
 }
