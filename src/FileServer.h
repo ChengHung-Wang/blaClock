@@ -17,9 +17,9 @@
 class FileServer
 {
 public:
-    FileServer() { csPin = 5; };
-    FileServer(int _csPin) : csPin(_csPin)
-    {}
+  FileServer() { csPin = 5; };
+  FileServer(int _csPin) : csPin(_csPin)
+  {}
   bool init() {
     return card.begin(csPin);
   };
@@ -77,11 +77,12 @@ public:
   
   // [ok] get web depends file
   void api_webuiDependsFile(AsyncWebServerRequest*);
+
 private:
   int csPin;
+  SDFS card = SDFS(FSImplPtr(new VFSImpl()));
   Vector<String> split(const char, String);
   String previousDirPath(String);
-  SDFS card = SDFS(FSImplPtr(new VFSImpl()));
 };
 
 #endif // FILESERVER_H
