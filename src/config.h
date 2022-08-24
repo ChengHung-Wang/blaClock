@@ -20,7 +20,8 @@
 #define PIN_DAC_BCK 4
 // 74HC595
 #define PIN_74HC595_DS 32
-#define PIN_74HC595_STCP 25
+#define PIN_74HC595_OE 25
+#define PIN_74HC595_STCP 0
 #define PIN_74HC595_SHCP 33
 // I2C
 #define PIN_SCL 22
@@ -31,8 +32,8 @@
 // Internet Services Configuration
 // ************************
 #define DNS_PORT 53
-#define WIFI_SSID "research"
-#define WIFI_PASSWORD "Skills39"
+#define WIFI_SSID "LouisaCoffee"
+#define WIFI_PASSWORD "23676613"
 
 
 //  temp

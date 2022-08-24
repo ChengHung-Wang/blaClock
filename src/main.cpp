@@ -5,7 +5,6 @@
 #include <ESPAsyncWebServer.h>
 // JSON support
 #include <ArduinoJson.h>
-
 // I2S Audio
 #include <Audio.h>
 // Time
@@ -22,18 +21,17 @@
 
 #include <config.h>
 
-// ************************
-// web server test
-// ************************
 Carbon DateTime;
 FileServer SDCard(5);
 AsyncWebServer Server(80);
 DNSServer DNS;
 Audio PCM5102A;
+Relay RelaySW(PIN_74HC595_DS, PIN_74HC595_SHCP, PIN_74HC595_STCP, PIN_74HC595_OE);
+
 // MCP41010
 Dpot digitalVR1(PIN_DPOT_A_SS);
 Dpot digitalVR2(PIN_DPOT_B_SS);
-Dpot digitalVR3(PIN_DPOT_C_SS);
+Dpot  digitalVR3(PIN_DPOT_C_SS);
 Dpot digitalVR4(PIN_DPOT_D_SS);
 
 // Create a MAX17043
@@ -65,6 +63,7 @@ IPAddress initWiFi()
 void setup()
 {
     Serial.begin(115200);
+    RelaySW.init();
     //  init
     IPAddress ip = initWiFi();
     DNS.start(DNS_PORT, "blaclock.net", ip);
@@ -152,6 +151,6 @@ void loop()
         Serial.println("charge: " + String(gauge.charge()));
         Serial.println("now: " + String(DateTime.now()));        
     }
-
+    RelaySW.test();
     PCM5102A.loop();
 }

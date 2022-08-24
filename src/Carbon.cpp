@@ -17,7 +17,7 @@ unsigned long Carbon::now()
     if (!getLocalTime(&timeInfo))
     {
         // TODO: save to syslog
-        // Serial.println("Failed to obtain time");
+        Serial.println("Failed to obtain time");
         return (0);
     }
     time(&datetime);
